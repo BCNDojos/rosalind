@@ -2,6 +2,7 @@ import sys
 import os
 import glob
 import time
+import types
 
 
 def timeit(method):
@@ -26,10 +27,17 @@ def run(algorithm, dataset, file=sys.stdout, **kwargs):
     if file is None:
         file = open(os.devnull, 'w')
     with open(dataset) as f:
-        print(*algorithm(f.read()), file=file)
+        results = algorithm(f.read())
+        if isinstance(results, types.GeneratorType):
+            for r in results:
+                print(r, end='', file=file)
+            print('', file=file)
+        else:
+            print(*results, file=file)
 
 
-def run_and_measure(algorithm, data_file_pattern, file=None):
+def run_and_measure(algorithm, data_file_pattern, file=None, consume=False):
     for data_file in sorted(glob.glob(data_file_pattern)):
         print('Processing {}'.format(data_file))
-        run(algorithm, data_file, name=algorithm.__name__, file=file)
+        run(algorithm, data_file, file=file,
+            consume=consume, name=algorithm.__name__)
